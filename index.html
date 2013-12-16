@@ -1,0 +1,47 @@
+<!doctype html>
+<html>
+	<head>
+		<title>Interactive World Demo</title>
+		
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		
+		<link href="css/main.css" rel="stylesheet" type="text/css" />
+
+		<!--
+		<meta property="og:image" content="http://funnylookinhat.com/interactive-world-demo/images/preview.jpg" />
+		<meta itemprop="image" content="http://funnylookinhat.com/interactive-world-demo/images/preview.jpg" /> 
+		-->
+	</head>
+	<body>
+		<div id="container"></div>
+		<!--
+		<div id="info">
+			<div class="top">
+				<a href="http://github.com/funnylookinhat/dynamic-terrain-map">THREE.DynamicTerrainMap</a> - Simulated Walking Image World Demo
+			</div>
+			<div class="bottom" id="inlineDoc" >
+				wasd = move camera, qe = rotate camera, rf = adjust camera height, scrollwheel = zoom in/out
+			</div>
+		</div> 
+		-->
+
+		<!-- Includes -->
+		<script src="js/includes/three.js/three.min.js"></script>
+		<script src="js/includes/three.js/Detector.js"></script>
+		<script src="js/includes/three.js/Stats.js"></script>
+
+		<script src="js/includes/threex/THREEx.FullScreen.js"></script>
+		<script src="js/includes/threex/THREEx.WindowResize.js"></script>
+
+		<script src="js/includes/GenericTerrainMaterial.js"></script>
+		<script src="js/includes/GenericWireframeMaterial.js"></script>
+		<script src="js/includes/MapControls.js"></script>
+
+		<script src="js/includes/DynamicTerrainMap.build.js"></script>
+
+		<!-- Main Script -->
+		<script type="text/javascript" src="js/interactive-world-demo.js"></script>
+
+	</body>
+</html>
