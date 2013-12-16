@@ -57,20 +57,6 @@ function loadResources() {
 			scale: 5,
 			scaleMin: 5
 		},
-		"oak-brown": {
-			minHeight: 2,
-			maxHeight: 30,
-			percentage: 0.5,
-			scale: 5,
-			scaleMin: 5
-		},
-		"oak-gray": {
-			minHeight: 2,
-			maxHeight: 30,
-			percentage: 0.5,
-			scale: 5,
-			scaleMin: 5
-		},
 		"pine-brown": {
 			minHeight: 55,
 			maxHeight: 160,
@@ -84,6 +70,20 @@ function loadResources() {
 			percentage: 2,
 			scale: 5,
 			scaleMin: 5
+		},
+		"oak-gray": {
+			minHeight: 2,
+			maxHeight: 30,
+			percentage: 0.5,
+			scale: 5,
+			scaleMin: 5
+		},
+		"oak-brown": {
+			minHeight: 1,
+			maxHeight: 30,
+			percentage: 0.5,
+			scale: 5,
+			scaleMin: 7
 		},
 		"fern": {
 			minHeight: 0,
@@ -113,6 +113,9 @@ function loadResources() {
 	downloadResources(jsonLoader,resourcePaths,resources);
 }
 
+var worldGenProgress = 0;
+var worldGenProgressInterval;
+
 function downloadResources(loader,paths,resources) {
 	if( typeof loader == 'undefined' ||
 		typeof resources == 'undefined' ||
@@ -127,6 +130,10 @@ function downloadResources(loader,paths,resources) {
 
 	if( typeof index == 'undefined' ) {
 		// $('#loading-file').text("Randomizing Trees and Clutter");
+		$('#loading-message').text('Generating World...  This will take about 1 minute.');
+		worldGenProgressInterval = setInterval(function() {
+			$('#loading-message').text('Generating World... '+worldGenProgress+'%');
+		},500);
 		setTimeout(function() {
 			init();
 		},50);
@@ -139,6 +146,7 @@ function downloadResources(loader,paths,resources) {
 			}
 			resources[index] = new THREE.Mesh( geometry, new THREE.MeshFaceMaterial( materials ) );
 			resourcesLoaded++;
+			$('#loading-message').text('Loading Resources '+resourcesLoaded+'/'+totalResources);
 			console.log('RESOURCE LOAD STATUS: '+resourcesLoaded+' / '+totalResources);
 			downloadResources(loader,paths,resources);
 		});
@@ -230,6 +238,10 @@ function init(){
 		generateObjects();
 	});
 
+	// Default start pos
+	// x = 795
+	// z = -605
+
 	cameraControls = new THREE.MapControls({
 		camera: camera,
 		moveCallback: function () {
@@ -289,6 +301,7 @@ function init(){
 }
 
 function generateObjects() {
+	$('#loading-message').text('Generating World... 0%');
 
 	var treeKeys = [];
 	for( treeKey in resources ) {
@@ -304,7 +317,9 @@ function generateObjects() {
 	var objectCount = 0;
 	for( x = 0; x < terrainMap.width(); x++ ) {
 		if( x % 100 == 0 ) {
-			console.log('Added '+objectCount+'... progress '+( Math.floor(x / terrainMap.width()*100 ) )+'%');
+			worldGenProgress = ( Math.floor(x / terrainMap.width()*100 ) );
+			console.log('Added '+objectCount+'... progress '+worldGenProgress+'%');
+			//$('#loading-message').text('Generating World... '+worldGenProgress+'%');
 		}
 		for( z = 0; z < terrainMap.depth(); z++ ) {
 			y = terrainMap.heightAt(x,z);
@@ -333,7 +348,7 @@ function generateObjects() {
 
 					var blank = new THREE.Object3D();
 					blank.updateMatrix();
-					lod.addLevel(blank,1000);
+					lod.addLevel(blank,2000);
 					
 					lod.updateMatrix();
 					lod.matrixAutoUpdate = false;
@@ -345,6 +360,11 @@ function generateObjects() {
 		}
 	}
 	console.log("ADDED "+objectCount+" OBJECTS TO SCENE");
+	$('#loading').hide();
+	clearInterval(worldGenProgressInterval);
+
+	cameraControls._cameraPhi = 0.10;
+	cameraControls._center = {x: -1115, y: 0, z: -385};
 
 	/*
 	var key;
