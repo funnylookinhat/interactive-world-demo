@@ -84,7 +84,7 @@ function loadResources() {
 			percentage: 0.5,
 			scale: 5,
 			scaleMin: 7
-		},
+		}/*,
 		"fern": {
 			minHeight: 0,
 			maxHeight: 10,
