@@ -7,6 +7,8 @@ var resourcePositions = {"pine-gray":[[-0.31106591736897826,2862.7240810259245],
 var resources;
 var resourcesLoaded;
 var totalResources;
+var character;
+var characterBodyAnimations;
 
 //init();
 //animate();
@@ -251,18 +253,6 @@ function init(){
 	// transparently support window resize
 	THREEx.WindowResize.bind(renderer, camera);
 	
-	/*
-	// allow 'p' to make screenshot
-	THREEx.Screenshot.bindKey(renderer);
-	*/
-	/*
-	// allow 'f' to go fullscreen where this feature is supported
-	if( THREEx.FullScreen.available() ){
-		THREEx.FullScreen.bindKey();		
-		document.getElementById('inlineDoc').innerHTML	+= "- <i>f</i> for fullscreen";
-	}
-	*/
-	
 	// Pretty it up
 	var path = "resources/world/sky/sunnysky/";
 	var format = '.jpg';
@@ -294,6 +284,15 @@ function init(){
 
 	var light = new THREE.AmbientLight( 0xefefef ); // soft white light
 	scene.add( light );
+
+	character = new THREEx.MinecraftChar();
+	character.loadSkin('resources/character/char.png');
+	character.root.scale.x = character.root.scale.y = character.root.scale.z = 100;
+	character.root.position.set(-100,10,-100);
+	scene.add(character.root);
+
+	characterBodyAnimations = new THREEx.MinecraftCharBodyAnimations(character);
+	characterBodyAnimations.start('walk');
 
 	return true;
 }
@@ -412,10 +411,16 @@ var i = 0;
 function animate() {
 	requestAnimationFrame( animate );
 	render();
+	characterBodyAnimations.update(1000 / 60);
+	updateCameraHeight();
 	stats.update();
 }
 
 function updateCameraHeight() {
+	//character.root.position.set(cameraControls._center);
+	//character.root.position.y = terrainMap.heightAt(character.root.position.x + terrainMap.width() / 2 , character.root.position.z + terrainMap.depth() / 2 );
+	
+	/*
 	var terrainHeight = terrainMap.heightAt(camera.position.x + terrainMap.width() / 2 , camera.position.z + terrainMap.depth() / 2 );
 	var futureTerrainHeight = terrainMap.heightAt(camera.position.x - 10.0 + terrainMap.width() / 2 , camera.position.z - 10.0 + terrainMap.depth() / 2 );
 	if( camera.position.y < terrainHeight + 3 ) {
@@ -429,6 +434,7 @@ function updateCameraHeight() {
 			camera.position.y = terrainHeight + 3
 		}
 	}
+	*/
 	//camera.position.y = ( camera.position.y < terrainHeight + 3 ) ? terrainHeight + 3 : ( camera.position.y > terrainHeight + 1.5 ) ? camera.position.y - 0.5 : terrainHeight + 1 ;
 }
 
@@ -436,6 +442,13 @@ function render() {
 	if( i++ % 100 == 0 ) {
 		terrainMap.checkGeometry();
 	}
+	var angle = Date.now() / 10000;
+	var radius = 1000;
+	character.root.position.x = Math.cos(angle) * radius;
+	character.root.position.z = Math.sin(angle) * radius;
+	character.root.position.y = terrainMap.heightAt(character.root.position.x + (terrainMap.width() / 2 ), character.root.position.z  + (terrainMap.depth() / 2 ));
+	character.root.rotation.y = -angle;
+
 	// This is horribly inefficient
 	scene.traverse( function ( object ) { if ( object instanceof THREE.LOD ) { object.update( camera ); } } );
 	cameraControls.update();
