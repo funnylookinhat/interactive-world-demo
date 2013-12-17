@@ -386,7 +386,7 @@ function generateObjects() {
 
 					var blank = new THREE.Object3D();
 					blank.updateMatrix();
-					lod.addLevel(blank,2000);
+					lod.addLevel(blank,3000);
 					
 					lod.updateMatrix();
 					lod.matrixAutoUpdate = false;
