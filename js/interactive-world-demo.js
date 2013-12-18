@@ -404,7 +404,11 @@ function init(){
 			characterBodyAnimations.start('stand');
 		}
 	});
-	cameraControls.init();
+	cameraControls.init(function () {
+		setTimeout((function() {
+			terrainMap.checkGeometry();
+		}),1000);
+	});
 
 	return true;
 }
@@ -528,6 +532,13 @@ function animate() {
 	stats.update();
 }
 
+function updateCharacterHeight() {
+	var h = terrainMap.heightAt(character.root.position.x + (terrainMap.width() / 2 ), character.root.position.z  + (terrainMap.depth() / 2 ));
+	character.root.position.y = h;
+	return;
+	// TODO - PHYSICS
+}
+
 function render() {
 	if( i++ % 100 == 0 ) {
 		terrainMap.checkGeometry();
@@ -559,7 +570,7 @@ function render() {
 	character.root.rotation.y = -angle;
 	*/
 
-	character.root.position.y = terrainMap.heightAt(character.root.position.x + (terrainMap.width() / 2 ), character.root.position.z  + (terrainMap.depth() / 2 ));
+	updateCharacterHeight();
 
 	// This is horribly inefficient
 	scene.traverse( function ( object ) { if ( object instanceof THREE.LOD ) { object.update( camera ); } } );

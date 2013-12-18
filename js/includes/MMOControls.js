@@ -87,7 +87,7 @@ THREE.MMOControls = function (parameters) {
   
 }
 
-THREE.MMOControls.prototype.init = function () {
+THREE.MMOControls.prototype.init = function (callback) {
   var self = this;
   self._domElement.addEventListener( 'keydown' , function (event) {
     self._keyDown(event,self);
@@ -137,6 +137,8 @@ THREE.MMOControls.prototype.init = function () {
   self._domElement.addEventListener( 'mousemove', function (event) {
     self._mouseMove(event,self);
   });
+
+  if( callback ) callback();
 }
 
 THREE.MMOControls.prototype._mouseMove = function (event, self) {
