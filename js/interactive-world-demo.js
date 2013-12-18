@@ -19,6 +19,8 @@ var charactersMovements;
 //animate();
 loadResources();
 
+$(window).on("contextmenu", function (e) { e.preventDefault(); return false; } );
+
 function loadResources() {
 	resourcePaths = {};
 	resourceRules = {};
@@ -361,6 +363,7 @@ function init(){
 	}
 
 	// Demo purposes, we have a good path for the person viewing.
+	/*
 	characters[0].scale.x = characters[0].scale.y = characters[0].scale.z = 10;
 	charactersMovements[0].offsetX = charactersMovements[0].offsetZ = -400;
 	charactersMovements[0].radius = 1000;
@@ -376,19 +379,32 @@ function init(){
 		}
 	});
 	cameraControls.init();
-
+	*/
 	
-
-	/*
 	character = new THREEx.MinecraftChar();
-	//character.loadSkin('resources/character/char.png');
-	character.root.scale.x = character.root.scale.y = character.root.scale.z = 100;
-	character.root.position.set(-100,10,-100);
+	character.loadSkin('resources/character/char.png');
+	character.root.scale.x = character.root.scale.y = character.root.scale.z = 10;
+	character.root.position.set(-250,10,-250);
 	scene.add(character.root);
 
 	characterBodyAnimations = new THREEx.MinecraftCharBodyAnimations(character);
-	characterBodyAnimations.start('walk');
-	*/
+	//characterBodyAnimations.start('walk');
+	
+	cameraControls = new THREE.MMOControls({
+		camera: camera,
+		radius: 50,
+		character: character.root,
+		moveCallback: function () {
+			terrainMap.checkGeometry();
+		},
+		moveStartCallback: function(direction) {
+			characterBodyAnimations.start('run');
+		},
+		moveStopCallback: function() {
+			characterBodyAnimations.start('stand');
+		}
+	});
+	cameraControls.init();
 
 	return true;
 }
@@ -508,30 +524,8 @@ function animate() {
 			charactersAnimations[i].update(1000 / 60 * charactersMovements[i].angleModifier); // Cheap and easy.
 		}
 	}
-	updateCameraHeight();
+	characterBodyAnimations.update(1000 / 60);
 	stats.update();
-}
-
-function updateCameraHeight() {
-	//character.root.position.set(cameraControls._center);
-	//character.root.position.y = terrainMap.heightAt(character.root.position.x + terrainMap.width() / 2 , character.root.position.z + terrainMap.depth() / 2 );
-	
-	/*
-	var terrainHeight = terrainMap.heightAt(camera.position.x + terrainMap.width() / 2 , camera.position.z + terrainMap.depth() / 2 );
-	var futureTerrainHeight = terrainMap.heightAt(camera.position.x - 10.0 + terrainMap.width() / 2 , camera.position.z - 10.0 + terrainMap.depth() / 2 );
-	if( camera.position.y < terrainHeight + 3 ) {
-		camera.position.y = terrainHeight + 3;
-	} else if ( camera.position.y < futureTerrainHeight + 3 ) {
-		camera.position.y += 1.0;
-	} else {
-		if( camera.position.y > terrainHeight + 3 ) {
-			camera.position.y -= 0.5;
-		} else {
-			camera.position.y = terrainHeight + 3
-		}
-	}
-	*/
-	//camera.position.y = ( camera.position.y < terrainHeight + 3 ) ? terrainHeight + 3 : ( camera.position.y > terrainHeight + 1.5 ) ? camera.position.y - 0.5 : terrainHeight + 1 ;
 }
 
 function render() {
@@ -562,9 +556,10 @@ function render() {
 	/*
 	character.root.position.x = Math.cos(angle) * radius;
 	character.root.position.z = Math.sin(angle) * radius;
-	character.root.position.y = terrainMap.heightAt(character.root.position.x + (terrainMap.width() / 2 ), character.root.position.z  + (terrainMap.depth() / 2 ));
 	character.root.rotation.y = -angle;
 	*/
+
+	character.root.position.y = terrainMap.heightAt(character.root.position.x + (terrainMap.width() / 2 ), character.root.position.z  + (terrainMap.depth() / 2 ));
 
 	// This is horribly inefficient
 	scene.traverse( function ( object ) { if ( object instanceof THREE.LOD ) { object.update( camera ); } } );

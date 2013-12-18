@@ -7,7 +7,7 @@ THREE.MMOControls = function (parameters) {
   this._cameraRadius = parameters.radius ? parameters.radius : 15;
   this._domElement = parameters.domElement ? parameters.domElement : document;
   
-  this._moveStartCallback = parameters.moveStartCallback ? parameters.moveStartCallback : (function () { /* NULL */ });
+  this._moveStartCallback = parameters.moveStartCallback ? parameters.moveStartCallback : (function (direction) { /* NULL */ });
   this._moveStopCallback = parameters.moveStopCallback ? parameters.moveStopCallback : (function () { /* NULL */ });
   this._moveCallback = parameters.moveCallback ? parameters.moveCallback : (function () { /* NULL */ });
   this._moveCallbackDelta = parameters.moveCallbackDelta ? parameters.moveCallbackDelta : 50;
@@ -36,16 +36,27 @@ THREE.MMOControls = function (parameters) {
 
   this._defaultVelocity = 1;
 
-  this._characterAngle = this._character.rotation.y;
-  this._characterVelocity = 0.00;
+  this._characterAngle = 0;
+  this._characterAngleDelta = 0.00;
+  this._characterMovementVelocity = 0.00;
+  this._characterMovementAngle = 0.00;
 
-  this._activeCenterKeys = {
+  this._activeTurnKeys = {
+    '81': false,
+    '69': false
+  };
+  this._keyTurnMappings = {
+    '81': 0.005,
+    '69': -0.005
+  }
+
+  this._activeMovementKeys = {
     '87': false,
     '83': false,
     '65': false,
     '68': false
   };
-  this._keyCenterMappings = {
+  this._keyMovementMappings = {
     '87': [0,1],
     '83': [0,-1],
     '65': [-1,0],
@@ -69,29 +80,10 @@ THREE.MMOControls = function (parameters) {
     } 
   }
 
-  /*
-  this._activeThetaKeys = {
-    '81': false,
-    '69': false
-  };
-
-  this._keyThetaMappings = {
-    '81': 0.05,
-    '69': -0.05
-  };
-  */
-
-  /*
-  this._activePhiKeys = {
-    '82': false,
-    '70': false
-  };
-
-  this._keyPhiMappings = {
-    '82': 0.005,
-    '70': -0.005
-  };
-  */
+  this._characterDragActive = false;
+  this._cameraDragActive = false;
+  this._mouseLastX = false;
+  this._mouseLastY = false;
   
 }
 
@@ -109,42 +101,118 @@ THREE.MMOControls.prototype.init = function () {
   self._domElement.addEventListener( 'DOMMouseScroll', function (event) {
     self._mouseWheel(event,self);
   }, false );
+  self._domElement.addEventListener( 'onContextMenu', function (event) {
+    if(event.preventDefault != undefined)
+      event.preventDefault();
+    if(event.stopPropagation != undefined)
+      event.stopPropagation();
+    return false;
+  });
+  self._domElement.addEventListener( 'mousedown', function (event) {
+    if( event.button === 2 ) {
+      // Right click
+      if(event.preventDefault != undefined)
+        event.preventDefault();
+      if(event.stopPropagation != undefined)
+        event.stopPropagation();
+      self._rightMouseDown(event,self);
+    } else {
+      // Treat everything else as left click
+      self._leftMouseDown(event,self);
+    }
+    return false;
+  }, false );
+  self._domElement.addEventListener( 'mouseup', function (event) {
+    if( event.button === 2 ) {
+      if(event.preventDefault != undefined)
+        event.preventDefault();
+      if(event.stopPropagation != undefined)
+        event.stopPropagation();
+      self._rightMouseUp(event,self);
+    } else {
+      self._leftMouseUp(event,self);
+    }
+    return false;
+  }, false );
+  self._domElement.addEventListener( 'mousemove', function (event) {
+    self._mouseMove(event,self);
+  });
+}
+
+THREE.MMOControls.prototype._mouseMove = function (event, self) {
+  var deltaX = event.clientX - self._mouseLastX;
+  var deltaY = event.clientY - self._mouseLastY;
+  self._mouseLastX = event.clientX;
+  self._mouseLastY = event.clientY;
+  if( self._cameraDragActive ) {
+    self._cameraTheta += ( deltaX / 175 );
+    self._cameraPhi += ( deltaY / 250 );
+  } else if( self._characterDragActive ) {
+    self._characterAngle -= ( deltaX / 175 );
+    self._cameraPhi += ( deltaY / 250 );
+  }
+
+  if( self._cameraPhi < self._minPhi ) {
+    self._cameraPhi = self._minPhi;
+  } else if ( self._cameraPhi > self._maxPhi ) {
+    self._cameraPhi = self._maxPhi;
+  }
+}
+
+THREE.MMOControls.prototype._leftMouseDown = function (event, self) {
+  if( ! self._characterDragActive ) {
+    self._cameraDragActive = true;
+    self._mouseLastX = event.clientX;
+    self._mouseLastY = event.clientY;
+  }
+}
+
+THREE.MMOControls.prototype._leftMouseUp = function (event, self) {
+  if( self._cameraDragActive ) {
+    self._cameraDragActive = false;
+    self._mouseLastX = event.clientX;
+    self._mouseLastY = event.clientY;
+  }
+}
+
+THREE.MMOControls.prototype._rightMouseDown = function (event, self) {
+  if( ! self._cameraDragActive ) {
+    self._characterDragActive = true;
+    self._mouseLastX = event.clientX;
+    self._mouseLastY = event.clientY;
+  }
+}
+
+THREE.MMOControls.prototype._rightMouseUp = function (event, self) {
+  if( self._characterDragActive ) {
+    self._characterDragActive = false;
+    self._mouseLastX = event.clientX;
+    self._mouseLastY = event.clientY;
+  }
 }
 
 THREE.MMOControls.prototype._keyDown = function (event, self) {
-  /*
-  if( typeof self._activeCenterKeys[event.keyCode.toString()] != "undefined" &&
-      ! self._activeCenterKeys[event.keyCode.toString()] ) {
-    self._activeCenterKeys[event.keyCode.toString()] = true;
-    self._updateAcceleration();
-  } else if( typeof self._activeThetaKeys[event.keyCode.toString()] != "undefined" &&
-             ! self._activeThetaKeys[event.keyCode.toString()] ) {
-    self._activeThetaKeys[event.keyCode.toString()] = true;
-    self._updateTheta();
-  } else if( typeof self._activePhiKeys[event.keyCode.toString()] != "undefined" &&
-             ! self._activePhiKeys[event.keyCode.toString()] ) {
-    self._activePhiKeys[event.keyCode.toString()] = true;
-    self._updatePhi();
-  } 
-  */
+  if( typeof self._activeMovementKeys[event.keyCode.toString()] != "undefined" &&
+      ! self._activeMovementKeys[event.keyCode.toString()] ) {
+    self._activeMovementKeys[event.keyCode.toString()] = true;
+    self._updateVelocity();
+  } else if( typeof self._activeTurnKeys[event.keyCode.toString()] != "undefined" &&
+      ! self._activeTurnKeys[event.keyCode.toString()] ) {
+    self._activeTurnKeys[event.keyCode.toString()] = true;
+    self._updateVelocity();
+  }
 }
 
 THREE.MMOControls.prototype._keyUp = function (event, self) {
-  /*
-  if( typeof self._activeCenterKeys[event.keyCode.toString()] != "undefined" &&
-      self._activeCenterKeys[event.keyCode.toString()] ) {
-    self._activeCenterKeys[event.keyCode.toString()] = false;
-    self._updateAcceleration();
-  } else if( typeof self._activeThetaKeys[event.keyCode.toString()] != "undefined" &&
-            self._activeThetaKeys[event.keyCode.toString()] ) {
-    self._activeThetaKeys[event.keyCode.toString()] = false;
-    self._updateTheta();
-  } else if( typeof self._activePhiKeys[event.keyCode.toString()] != "undefined" &&
-             self._activePhiKeys[event.keyCode.toString()] ) {
-    self._activePhiKeys[event.keyCode.toString()] = false;
-    self._updatePhi();
-  } 
-  */
+  if( typeof self._activeMovementKeys[event.keyCode.toString()] != "undefined" &&
+      self._activeMovementKeys[event.keyCode.toString()] ) {
+    self._activeMovementKeys[event.keyCode.toString()] = false;
+    self._updateVelocity();
+  } else if( typeof self._activeTurnKeys[event.keyCode.toString()] != "undefined" &&
+      self._activeTurnKeys[event.keyCode.toString()] ) {
+    self._activeTurnKeys[event.keyCode.toString()] = false;
+    self._updateVelocity();
+  }
 }
 
 THREE.MMOControls.prototype._mouseWheel = function (event, self) {
@@ -164,13 +232,65 @@ THREE.MMOControls.prototype.update = function () {
   var newTime = Date.now();
   var timeDelta = ( newTime - this._lastTime ) / 10;
 
-  //this.updateCenter(timeDelta);
+  this._updateCharacter(timeDelta);
   this._updateCamera();
 
   this._lastTime = newTime;
 }
 
+THREE.MMOControls.prototype._updateVelocity = function () {
+  var angleDelta = 0.00;
+  for( i in this._activeTurnKeys ) {
+    if( this._activeTurnKeys[i] ) {
+      angleDelta += this._keyTurnMappings[i];
+    }
+  }
+  this._characterAngleDelta = angleDelta;
+
+  var vector = [0,0];
+  for( i in this._activeMovementKeys ) {
+    if( this._activeMovementKeys[i] ) {
+      vector[0] += this._keyMovementMappings[i][0];
+      vector[1] += this._keyMovementMappings[i][1];
+    }
+  }
+
+  if( vector[0] != 0 || vector[1] != 0 ) {
+    this._characterMovementVelocity = this._defaultVelocity;
+    this._characterMovementAngle = this._vectorAngles[vector[0].toString()][vector[1].toString()];
+    var direction = 'forward';
+    this._moveStartCallback(direction);
+  } else {
+    this._characterMovementVelocity = 0;
+    this._moveStopCallback();
+  }
+}
+
+THREE.MMOControls.prototype._updateCharacter = function (timeDelta) {
+  if( this._characterAngleDelta ) {
+    this._characterAngle += this._characterAngleDelta * timeDelta;
+  }
+
+  this._character.rotation.y = this._characterAngle;
+
+  if( this._characterMovementVelocity ) {
+    this._character.position.x += Math.cos( -this._characterAngle + ( Math.PI / 2 ) + this._characterMovementAngle ) * this._characterMovementVelocity * timeDelta;
+    this._character.position.z += Math.sin( -this._characterAngle + ( Math.PI / 2 ) + this._characterMovementAngle ) * this._characterMovementVelocity * timeDelta;
+  }
+}
+
 THREE.MMOControls.prototype._updateCamera = function () {
+  if( ! this._cameraDragActive && 
+      ! this._characterDragActive &&
+      this._cameraTheta != 0.00 ) {
+    // TODO - Fancier camera reset to reset to closest path.
+    this._cameraTheta += ( this._cameraTheta < 0 ? 0.05 : -0.05 );
+    if( Math.abs(this._cameraTheta) <= 0.05 ) {
+      this._cameraTheta = 0.00;
+    }
+  }
+
+
   this._camera.position.x = this._character.position.x + Math.cos(-this._character.rotation.y - ( Math.PI / 2 ) + this._cameraTheta) * this._cameraRadius;
   this._camera.position.z = this._character.position.z + Math.sin(-this._character.rotation.y - ( Math.PI / 2 ) + this._cameraTheta) * this._cameraRadius;
   this._camera.position.y = this._character.position.y + Math.sin(this._cameraPhi) * this._cameraRadius;
@@ -189,6 +309,8 @@ THREE.MMOControls.prototype._updateCamera = function () {
     );
   }
 }
+
+
 
 /*
 THREE.MapControls.prototype = {
