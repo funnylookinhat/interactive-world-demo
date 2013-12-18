@@ -10,6 +10,11 @@ var totalResources;
 var character;
 var characterBodyAnimations;
 
+var characters;
+var charactersVisible;
+var charactersAnimations;
+var charactersMovements;
+
 //init();
 //animate();
 loadResources();
@@ -285,14 +290,86 @@ function init(){
 	var light = new THREE.AmbientLight( 0xefefef ); // soft white light
 	scene.add( light );
 
+	characters = [];
+	charactersAnimations = [];
+	charactersMovements = [];
+	charactersVisible = [];
+
+	var scaleMin = 5;
+	var scaleMax = 50;
+	var radiusMin = 50;
+	var radiusMax = 1000;
+	var offsetXMin = -2000;
+	var offsetXMax = 2000;
+	var offsetZMin = -2000;
+	var offsetZMax = 2000;
+	var angleModifierMin = 1;
+	var angleModifierMax = 5;
+
+	var movement;
+	var lod;
+
+	var skinUrls = [];
+	for( i in THREEx.MinecraftChar.skinWellKnownUrls ) {
+		skinUrls.push(THREEx.MinecraftChar.skinWellKnownUrls[i]);
+	}
+
+	for( var i = 0; i < 50; i++ ) {
+		character = new THREEx.MinecraftChar();
+		character.loadSkin(skinUrls[Math.floor(Math.random() * skinUrls.length)]);
+		character.root.scale.x = character.root.scale.y = character.root.scale.z = Math.random() * ( scaleMax - scaleMin ) + scaleMin;
+		/*
+		lod = new THREE.LOD();
+		
+		character.root.updateMatrix();
+		character.root.matrixAutoUpdate = false;
+		lod.addLevel(character.root);
+		
+		var blank = new THREE.Object3D();
+		blank.updateMatrix();
+		lod.addLevel(blank,3000);
+		
+		lod.updateMatrix();
+		lod.matrixAutoUpdate = false;
+		
+		characters[i] = lod;
+		*/
+		characters[i] = character.root;
+
+		
+		movement = {};
+		movement.offsetX = Math.random() * ( offsetXMax - offsetXMin ) + offsetXMin;
+		movement.offsetZ = Math.random() * ( offsetZMax - offsetZMin ) + offsetZMin;
+		movement.angleModifier = Math.random() * ( angleModifierMax - angleModifierMin ) + angleModifierMin;
+		movement.radius = Math.random() * ( radiusMax - radiusMin ) + radiusMin;
+		movement.offsetAngle = Math.random() * Math.PI * 2;
+		charactersMovements[i] = movement;
+
+		characterBodyAnimations = new THREEx.MinecraftCharBodyAnimations(character);
+		if( charactersMovements[i].angleModifier > 3 ) {
+			characterBodyAnimations.start('run');
+		} else {
+			characterBodyAnimations.start('walk');
+		}
+		charactersAnimations[i] = characterBodyAnimations;
+
+		charactersVisible[i] = true;
+
+		scene.add(characters[i]);
+	}
+
+	
+
+	/*
 	character = new THREEx.MinecraftChar();
-	character.loadSkin('resources/character/char.png');
+	//character.loadSkin('resources/character/char.png');
 	character.root.scale.x = character.root.scale.y = character.root.scale.z = 100;
 	character.root.position.set(-100,10,-100);
 	scene.add(character.root);
 
 	characterBodyAnimations = new THREEx.MinecraftCharBodyAnimations(character);
 	characterBodyAnimations.start('walk');
+	*/
 
 	return true;
 }
@@ -386,7 +463,7 @@ function generateObjects() {
 
 					var blank = new THREE.Object3D();
 					blank.updateMatrix();
-					lod.addLevel(blank,3000);
+					lod.addLevel(blank,2000);
 					
 					lod.updateMatrix();
 					lod.matrixAutoUpdate = false;
@@ -411,7 +488,11 @@ var i = 0;
 function animate() {
 	requestAnimationFrame( animate );
 	render();
-	characterBodyAnimations.update(1000 / 60);
+	for( i in charactersAnimations ) {
+		if( charactersVisible[i] ) {
+			charactersAnimations[i].update(1000 / 60 * charactersMovements[i].angleModifier); // Cheap and easy.
+		}
+	}
 	updateCameraHeight();
 	stats.update();
 }
@@ -443,11 +524,32 @@ function render() {
 		terrainMap.checkGeometry();
 	}
 	var angle = Date.now() / 10000;
-	var radius = 1000;
+	
+	for( i in charactersMovements ) {
+		var cAngle = angle * charactersMovements[i].angleModifier + charactersMovements[i].offsetAngle;
+		characters[i].position.x = Math.cos(cAngle) * charactersMovements[i].radius + charactersMovements[i].offsetX;
+		characters[i].position.z = Math.sin(cAngle) * charactersMovements[i].radius + charactersMovements[i].offsetZ;
+		characters[i].position.y = terrainMap.heightAt(characters[i].position.x + (terrainMap.width() / 2 ), characters[i].position.z  + (terrainMap.depth() / 2 ));
+		characters[i].rotation.y = -cAngle;
+
+		var characterDistance = camera.position.distanceTo(characters[i].position);
+		if( ! charactersVisible[i] &&
+			characterDistance < 2000 ) {
+			charactersVisible[i] = true;
+			scene.add(characters[i]);
+		} else if ( charactersVisible[i] &&
+					characterDistance >= 2000 ) {
+			charactersVisible[i] = false;
+			scene.remove(characters[i]);
+		}
+	}
+	
+	/*
 	character.root.position.x = Math.cos(angle) * radius;
 	character.root.position.z = Math.sin(angle) * radius;
 	character.root.position.y = terrainMap.heightAt(character.root.position.x + (terrainMap.width() / 2 ), character.root.position.z  + (terrainMap.depth() / 2 ));
 	character.root.rotation.y = -angle;
+	*/
 
 	// This is horribly inefficient
 	scene.traverse( function ( object ) { if ( object instanceof THREE.LOD ) { object.update( camera ); } } );
