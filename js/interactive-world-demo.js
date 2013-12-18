@@ -247,6 +247,7 @@ function init(){
 	// x = 795
 	// z = -605
 
+	/*
 	cameraControls = new THREE.MapControls({
 		camera: camera,
 		moveCallback: function () {
@@ -254,6 +255,7 @@ function init(){
 		}
 	});
 	cameraControls.init();
+	*/
 	
 	// transparently support window resize
 	THREEx.WindowResize.bind(renderer, camera);
@@ -299,10 +301,10 @@ function init(){
 	var scaleMax = 50;
 	var radiusMin = 50;
 	var radiusMax = 1000;
-	var offsetXMin = -2000;
-	var offsetXMax = 2000;
-	var offsetZMin = -2000;
-	var offsetZMax = 2000;
+	var offsetXMin = -1500;
+	var offsetXMax = 1500;
+	var offsetZMin = -1500;
+	var offsetZMax = 1500;
 	var angleModifierMin = 1;
 	var angleModifierMax = 5;
 
@@ -357,6 +359,23 @@ function init(){
 
 		scene.add(characters[i]);
 	}
+
+	// Demo purposes, we have a good path for the person viewing.
+	characters[0].scale.x = characters[0].scale.y = characters[0].scale.z = 10;
+	charactersMovements[0].offsetX = charactersMovements[0].offsetZ = -400;
+	charactersMovements[0].radius = 1000;
+	charactersMovements[0].angleModifier = 0.5;
+	charactersMovements[0].offsetAngle = 0.5;
+
+	cameraControls = new THREE.MMOControls({
+		camera: camera,
+		radius: 50,
+		character: characters[0],
+		moveCallback: function () {
+			terrainMap.checkGeometry();
+		}
+	});
+	cameraControls.init();
 
 	
 
@@ -418,8 +437,6 @@ function generateObjects() {
 		}
 
 		$('#loading').hide();
-		cameraControls._cameraPhi = 0.10;
-		cameraControls._center = {x: -1115, y: 0, z: -385};
 		animate();
 		return;
 	}
@@ -476,8 +493,6 @@ function generateObjects() {
 	}
 
 	$('#loading').hide();
-	cameraControls._cameraPhi = 0.10;
-	cameraControls._center = {x: -1115, y: 0, z: -385};
 	animate();
 	return;
 
