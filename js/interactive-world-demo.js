@@ -314,7 +314,7 @@ function init(){
 		skinUrls.push(THREEx.MinecraftChar.skinWellKnownUrls[i]);
 	}
 
-	for( var i = 0; i < 100; i++ ) {
+	for( var i = 0; i < 50; i++ ) {
 		character = new THREEx.MinecraftChar();
 		character.loadSkin(skinUrls[Math.floor(Math.random() * skinUrls.length)]);
 		character.root.scale.x = character.root.scale.y = character.root.scale.z = Math.random() * ( scaleMax - scaleMin ) + scaleMin;
