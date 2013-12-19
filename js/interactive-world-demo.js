@@ -234,7 +234,7 @@ function init(){
 		workerScriptLocation: 'js/includes/DynamicTerrainMapChunkWorker.js',
 		chunkShowFarthest: false,
 		material: material.generateMaterial(),
-		detailRanges: [100,1500,2500,3500],
+		detailRanges: [100,1000,1750,3000],
 		chunkHoverRange: 300,
 		convertToFloat: function (rgba) {
 			return ( rgba.r + rgba.g + rgba.b);
@@ -417,9 +417,10 @@ function init(){
 	});
 	cameraControls.init(function () {
 		setTimeout((function() {
+			$('#loading').hide();
 			character.root.position.y = 1000;
 			terrainMap.checkGeometry();
-		}),1000);
+		}),1500);
 	});
 
 	return true;
@@ -468,7 +469,6 @@ function generateObjects() {
 			}
 		}
 
-		$('#loading').hide();
 		animate();
 		return;
 	}
