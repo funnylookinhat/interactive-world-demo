@@ -14,6 +14,8 @@ var characters;
 var charactersVisible;
 var charactersAnimations;
 var charactersMovements;
+var lastTime = false;
+var characterMoving = false;
 
 //init();
 //animate();
@@ -399,13 +401,23 @@ function init(){
 		},
 		moveStartCallback: function(direction) {
 			characterBodyAnimations.start('run');
+			characterMoving = true;
 		},
 		moveStopCallback: function() {
-			characterBodyAnimations.start('stand');
+			if( characterYVelocity == 0.00 ) {
+				characterBodyAnimations.start('stand');
+			}
+			characterMoving = false;
+		},
+		boundKeyDownCallbacks: {
+			'32': function () {
+				characterJump();
+			}
 		}
 	});
 	cameraControls.init(function () {
 		setTimeout((function() {
+			character.root.position.y = 1000;
 			terrainMap.checkGeometry();
 		}),1000);
 	});
@@ -513,6 +525,7 @@ function generateObjects() {
 	}
 
 	$('#loading').hide();
+
 	animate();
 	return;
 
@@ -532,17 +545,55 @@ function animate() {
 	stats.update();
 }
 
-function updateCharacterHeight() {
+var gravity = -0.1;//-9.8;
+var characterYVelocity = 0;
+var fallTime = 0;
+
+function characterJump() {
+	fallTime = 0;
+	characterBodyAnimations.start('jump');
+	characterYVelocity = 3;
+}
+
+function updateCharacterHeight(timeDelta) {
 	var h = terrainMap.heightAt(character.root.position.x + (terrainMap.width() / 2 ), character.root.position.z  + (terrainMap.depth() / 2 ));
-	character.root.position.y = h;
-	return;
-	// TODO - PHYSICS
+	
+	// Cheap Physics for Demo
+	if( character.root.position.y > h ||
+		characterYVelocity > 0 ) {
+		character.root.position.y = gravity * timeDelta * timeDelta + characterYVelocity * timeDelta + character.root.position.y;
+		characterYVelocity = gravity * timeDelta + characterYVelocity;
+		if( characterYVelocity < 0 ) {
+			fallTime += timeDelta;
+		}
+	}
+	if ( character.root.position.y < h ) {
+		character.root.position.y = h;
+		characterYVelocity = 0;
+		fallTime = 0;
+		if( characterMoving ) {
+			characterBodyAnimations.start('run');
+		} else {
+			characterBodyAnimations.start('stand');
+		}
+	}
+
+	if( fallTime > 20 ) {
+		characterBodyAnimations.start('fall');
+	}
 }
 
 function render() {
 	if( i++ % 100 == 0 ) {
 		terrainMap.checkGeometry();
 	}
+	if( lastTime == false ) {
+		lastTime = Date.now();
+	}
+	var newTime = Date.now();
+  	var timeDelta = ( newTime - lastTime ) / 25;
+  	lastTime = newTime;
+
 	var angle = Date.now() / 10000;
 	
 	for( i in charactersMovements ) {
@@ -570,10 +621,12 @@ function render() {
 	character.root.rotation.y = -angle;
 	*/
 
-	updateCharacterHeight();
+	updateCharacterHeight(timeDelta);
 
 	// This is horribly inefficient
 	scene.traverse( function ( object ) { if ( object instanceof THREE.LOD ) { object.update( camera ); } } );
 	cameraControls.update();
 	renderer.render( scene, camera );
+
+
 }

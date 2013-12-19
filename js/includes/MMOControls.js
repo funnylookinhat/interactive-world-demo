@@ -17,6 +17,11 @@ THREE.MMOControls = function (parameters) {
     return;
   }
 
+  // A dictionary of key code -> function
+  this._boundKeyDownCallbacks = parameters.boundKeyDownCallbacks ? parameters.boundKeyDownCallbacks : {};
+  this._boundKeyUpCallbacks = parameters.boundKeyUpCallbacks ? parameters.boundKeyUpCallbacks : {};
+
+
   this._characterPositionOld = new THREE.Vector3(
     this._character.position.x,
     this._character.position.y,
@@ -202,6 +207,8 @@ THREE.MMOControls.prototype._keyDown = function (event, self) {
       ! self._activeTurnKeys[event.keyCode.toString()] ) {
     self._activeTurnKeys[event.keyCode.toString()] = true;
     self._updateVelocity();
+  } else if( typeof self._boundKeyDownCallbacks[event.keyCode.toString()] != "undefined" ) {
+    self._boundKeyDownCallbacks[event.keyCode.toString()]();
   }
 }
 
@@ -214,6 +221,8 @@ THREE.MMOControls.prototype._keyUp = function (event, self) {
       self._activeTurnKeys[event.keyCode.toString()] ) {
     self._activeTurnKeys[event.keyCode.toString()] = false;
     self._updateVelocity();
+  } else if( typeof self._boundKeyUpCallbacks[event.keyCode.toString()] != "undefined" ) {
+    self._boundKeyUpCallbacks[event.keyCode.toString()]();
   }
 }
 

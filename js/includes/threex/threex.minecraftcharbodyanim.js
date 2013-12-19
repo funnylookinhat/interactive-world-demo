@@ -76,6 +76,27 @@ THREEx.MinecraftCharBodyAnimations	= function(character){
 		legRotationX	: 0
 	}).propertyTweens(propTweens).onCapture(onCapture).onUpdate(onUpdate));
 
+	// Setup 'jump' animation
+	animations.add('jump', THREEx.createAnimation().pushKeyframe(0.15, {
+		armLRotationZ	: +3*Math.PI/4,
+		armRRotationZ	: -3*Math.PI/4,
+		armRotationX	: +angleRange,
+		legRotationX	: +angleRange
+	}).propertyTweens(propTweens).onCapture(onCapture).onUpdate(onUpdate));
+
+	// Setup 'fall' animation
+	animations.add('fall', THREEx.createAnimation().pushKeyframe(0.5, {
+		armLRotationZ	: Math.PI-3*Math.PI/5,
+		armRRotationZ	: Math.PI+3*Math.PI/5,
+		armRotationX	: +angleRange,
+		legRotationX	: +angleRange
+	}).pushKeyframe(0.5, {
+		armLRotationZ	: Math.PI-Math.PI/10,
+		armRRotationZ	: Math.PI+Math.PI/10,
+		armRotationX	: -angleRange,
+		legRotationX	: -angleRange
+	}).propertyTweens(propTweens).onCapture(onCapture).onUpdate(onUpdate));
+
 	// Setup 'wave' animation
 	var angleRange	= Math.PI/2-Math.PI/10;
 	animations.add('wave'	, THREEx.createAnimation().pushKeyframe(0.5, {
