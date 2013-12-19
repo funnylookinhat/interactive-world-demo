@@ -8,23 +8,22 @@
 		
 		<link href="css/main.css" rel="stylesheet" type="text/css" />
 
-		<!--
 		<meta property="og:image" content="http://funnylookinhat.com/interactive-world-demo/images/preview.jpg" />
 		<meta itemprop="image" content="http://funnylookinhat.com/interactive-world-demo/images/preview.jpg" /> 
-		-->
+		
 	</head>
 	<body>
 		<div id="container"></div>
-		<!--
+		
 		<div id="info">
 			<div class="top">
-				<a href="http://github.com/funnylookinhat/dynamic-terrain-map">THREE.DynamicTerrainMap</a> - Simulated Walking Image World Demo
+				<a href="http://github.com/funnylookinhat/interactive-world-demo">Interactive World Demo</a> - Simulated Walking Terrain Demo
 			</div>
 			<div class="bottom" id="inlineDoc" >
-				wasd = move camera, qe = rotate camera, rf = adjust camera height, scrollwheel = zoom in/out
+				wasd = move character, qe = rotate, space = jump, left click + drag = rotate camera, right click + drag = rotate character, scrollwheel = zoom in/out
 			</div>
 		</div> 
-		-->
+		
 		<div id="loading">
 			<h2 id="loading-message">Loading Resources</h2>
 		</div>
@@ -36,12 +35,19 @@
 		<script src="js/includes/three.js/Detector.js"></script>
 		<script src="js/includes/three.js/Stats.js"></script>
 
-		<script src="js/includes/threex/THREEx.FullScreen.js"></script>
 		<script src="js/includes/threex/THREEx.WindowResize.js"></script>
+
+		<script src="js/includes/threex/threex.minecraft.js"></script>
+		<script src="js/includes/threex/threex.animation.js"></script>
+		<script src="js/includes/threex/threex.animations.js"></script>
+		<script src="js/includes/threex/threex.minecraftcharheadanim.js"></script>
+		<script src="js/includes/threex/threex.minecraftcharbodyanim.js"></script>
+		
 
 		<script src="js/includes/GenericTerrainMaterial.js"></script>
 		<script src="js/includes/GenericWireframeMaterial.js"></script>
 		<script src="js/includes/MapControls.js"></script>
+		<script src="js/includes/MMOControls.js"></script>
 
 		<script src="js/includes/DynamicTerrainMap.build.js"></script>
 

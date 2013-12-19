@@ -7,10 +7,21 @@ var resourcePositions = {"pine-gray":[[-0.31106591736897826,2862.7240810259245],
 var resources;
 var resourcesLoaded;
 var totalResources;
+var character;
+var characterBodyAnimations;
+
+var characters;
+var charactersVisible;
+var charactersAnimations;
+var charactersMovements;
+var lastTime = false;
+var characterMoving = false;
 
 //init();
 //animate();
 loadResources();
+
+$(window).on("contextmenu", function (e) { e.preventDefault(); return false; } );
 
 function loadResources() {
 	resourcePaths = {};
@@ -223,7 +234,7 @@ function init(){
 		workerScriptLocation: 'js/includes/DynamicTerrainMapChunkWorker.js',
 		chunkShowFarthest: false,
 		material: material.generateMaterial(),
-		detailRanges: [100,1500,2500,3500],
+		detailRanges: [100,1000,1750,3000],
 		chunkHoverRange: 300,
 		convertToFloat: function (rgba) {
 			return ( rgba.r + rgba.g + rgba.b);
@@ -240,6 +251,7 @@ function init(){
 	// x = 795
 	// z = -605
 
+	/*
 	cameraControls = new THREE.MapControls({
 		camera: camera,
 		moveCallback: function () {
@@ -247,21 +259,10 @@ function init(){
 		}
 	});
 	cameraControls.init();
+	*/
 	
 	// transparently support window resize
 	THREEx.WindowResize.bind(renderer, camera);
-	
-	/*
-	// allow 'p' to make screenshot
-	THREEx.Screenshot.bindKey(renderer);
-	*/
-	/*
-	// allow 'f' to go fullscreen where this feature is supported
-	if( THREEx.FullScreen.available() ){
-		THREEx.FullScreen.bindKey();		
-		document.getElementById('inlineDoc').innerHTML	+= "- <i>f</i> for fullscreen";
-	}
-	*/
 	
 	// Pretty it up
 	var path = "resources/world/sky/sunnysky/";
@@ -294,6 +295,133 @@ function init(){
 
 	var light = new THREE.AmbientLight( 0xefefef ); // soft white light
 	scene.add( light );
+
+	characters = [];
+	charactersAnimations = [];
+	charactersMovements = [];
+	charactersVisible = [];
+
+	var scaleMin = 5;
+	var scaleMax = 50;
+	var radiusMin = 50;
+	var radiusMax = 1000;
+	var offsetXMin = -1500;
+	var offsetXMax = 1500;
+	var offsetZMin = -1500;
+	var offsetZMax = 1500;
+	var angleModifierMin = 1;
+	var angleModifierMax = 5;
+
+	var movement;
+	var lod;
+
+	var skinUrls = [];
+	for( i in THREEx.MinecraftChar.skinWellKnownUrls ) {
+		skinUrls.push(THREEx.MinecraftChar.skinWellKnownUrls[i]);
+	}
+
+	for( var i = 0; i < 50; i++ ) {
+		character = new THREEx.MinecraftChar();
+		character.loadSkin(skinUrls[Math.floor(Math.random() * skinUrls.length)]);
+		character.root.scale.x = character.root.scale.y = character.root.scale.z = Math.random() * ( scaleMax - scaleMin ) + scaleMin;
+		/*
+		lod = new THREE.LOD();
+		
+		character.root.updateMatrix();
+		character.root.matrixAutoUpdate = false;
+		lod.addLevel(character.root);
+		
+		var blank = new THREE.Object3D();
+		blank.updateMatrix();
+		lod.addLevel(blank,3000);
+		
+		lod.updateMatrix();
+		lod.matrixAutoUpdate = false;
+		
+		characters[i] = lod;
+		*/
+		characters[i] = character.root;
+
+		
+		movement = {};
+		movement.offsetX = Math.random() * ( offsetXMax - offsetXMin ) + offsetXMin;
+		movement.offsetZ = Math.random() * ( offsetZMax - offsetZMin ) + offsetZMin;
+		movement.angleModifier = Math.random() * ( angleModifierMax - angleModifierMin ) + angleModifierMin;
+		movement.radius = Math.random() * ( radiusMax - radiusMin ) + radiusMin;
+		movement.offsetAngle = Math.random() * Math.PI * 2;
+		charactersMovements[i] = movement;
+
+		characterBodyAnimations = new THREEx.MinecraftCharBodyAnimations(character);
+		if( charactersMovements[i].angleModifier > 3 ) {
+			characterBodyAnimations.start('run');
+		} else {
+			characterBodyAnimations.start('walk');
+		}
+		charactersAnimations[i] = characterBodyAnimations;
+
+		charactersVisible[i] = true;
+
+		scene.add(characters[i]);
+	}
+
+	// Demo purposes, we have a good path for the person viewing.
+	/*
+	characters[0].scale.x = characters[0].scale.y = characters[0].scale.z = 10;
+	charactersMovements[0].offsetX = charactersMovements[0].offsetZ = -400;
+	charactersMovements[0].radius = 1000;
+	charactersMovements[0].angleModifier = 0.5;
+	charactersMovements[0].offsetAngle = 0.5;
+
+	cameraControls = new THREE.MMOControls({
+		camera: camera,
+		radius: 50,
+		character: characters[0],
+		moveCallback: function () {
+			terrainMap.checkGeometry();
+		}
+	});
+	cameraControls.init();
+	*/
+	
+	character = new THREEx.MinecraftChar();
+	character.loadSkin('resources/character/char.png');
+	character.root.scale.x = character.root.scale.y = character.root.scale.z = 10;
+	character.root.position.set(-250,10,-250);
+	scene.add(character.root);
+
+	characterBodyAnimations = new THREEx.MinecraftCharBodyAnimations(character);
+	//characterBodyAnimations.start('walk');
+	
+	cameraControls = new THREE.MMOControls({
+		camera: camera,
+		radius: 50,
+		character: character.root,
+		moveCallback: function () {
+			terrainMap.checkGeometry();
+		},
+		moveStartCallback: function(direction) {
+			characterBodyAnimations.start('run');
+			characterMoving = true;
+		},
+		moveStopCallback: function() {
+			if( characterYVelocity == 0.00 ) {
+				characterBodyAnimations.start('stand');
+			}
+			characterMoving = false;
+		},
+		boundKeyDownCallbacks: {
+			'32': function () {
+				characterJump();
+			}
+		}
+	});
+	cameraControls.init(function () {
+		setTimeout((function() {
+			$('#loading').hide();
+			character.root.position.y = 1000;
+			terrainMap.checkGeometry();
+		}),1500);
+	});
 
 	return true;
 }
@@ -341,9 +469,6 @@ function generateObjects() {
 			}
 		}
 
-		$('#loading').hide();
-		cameraControls._cameraPhi = 0.10;
-		cameraControls._center = {x: -1115, y: 0, z: -385};
 		animate();
 		return;
 	}
@@ -400,8 +525,7 @@ function generateObjects() {
 	}
 
 	$('#loading').hide();
-	cameraControls._cameraPhi = 0.10;
-	cameraControls._center = {x: -1115, y: 0, z: -385};
+
 	animate();
 	return;
 
@@ -412,32 +536,97 @@ var i = 0;
 function animate() {
 	requestAnimationFrame( animate );
 	render();
+	for( i in charactersAnimations ) {
+		if( charactersVisible[i] ) {
+			charactersAnimations[i].update(1000 / 60 * charactersMovements[i].angleModifier); // Cheap and easy.
+		}
+	}
+	characterBodyAnimations.update(1000 / 60);
 	stats.update();
 }
 
-function updateCameraHeight() {
-	var terrainHeight = terrainMap.heightAt(camera.position.x + terrainMap.width() / 2 , camera.position.z + terrainMap.depth() / 2 );
-	var futureTerrainHeight = terrainMap.heightAt(camera.position.x - 10.0 + terrainMap.width() / 2 , camera.position.z - 10.0 + terrainMap.depth() / 2 );
-	if( camera.position.y < terrainHeight + 3 ) {
-		camera.position.y = terrainHeight + 3;
-	} else if ( camera.position.y < futureTerrainHeight + 3 ) {
-		camera.position.y += 1.0;
-	} else {
-		if( camera.position.y > terrainHeight + 3 ) {
-			camera.position.y -= 0.5;
-		} else {
-			camera.position.y = terrainHeight + 3
+var gravity = -0.1;//-9.8;
+var characterYVelocity = 0;
+var fallTime = 0;
+
+function characterJump() {
+	fallTime = 0;
+	characterBodyAnimations.start('jump');
+	characterYVelocity = 3;
+}
+
+function updateCharacterHeight(timeDelta) {
+	var h = terrainMap.heightAt(character.root.position.x + (terrainMap.width() / 2 ), character.root.position.z  + (terrainMap.depth() / 2 ));
+	
+	// Cheap Physics for Demo
+	if( character.root.position.y > h ||
+		characterYVelocity > 0 ) {
+		character.root.position.y = gravity * timeDelta * timeDelta + characterYVelocity * timeDelta + character.root.position.y;
+		characterYVelocity = gravity * timeDelta + characterYVelocity;
+		if( characterYVelocity < 0 ) {
+			fallTime += timeDelta;
 		}
 	}
-	//camera.position.y = ( camera.position.y < terrainHeight + 3 ) ? terrainHeight + 3 : ( camera.position.y > terrainHeight + 1.5 ) ? camera.position.y - 0.5 : terrainHeight + 1 ;
+	if ( character.root.position.y < h ) {
+		character.root.position.y = h;
+		characterYVelocity = 0;
+		fallTime = 0;
+		if( characterMoving ) {
+			characterBodyAnimations.start('run');
+		} else {
+			characterBodyAnimations.start('stand');
+		}
+	}
+
+	if( fallTime > 20 ) {
+		characterBodyAnimations.start('fall');
+	}
 }
 
 function render() {
 	if( i++ % 100 == 0 ) {
 		terrainMap.checkGeometry();
 	}
+	if( lastTime == false ) {
+		lastTime = Date.now();
+	}
+	var newTime = Date.now();
+  	var timeDelta = ( newTime - lastTime ) / 25;
+  	lastTime = newTime;
+
+	var angle = Date.now() / 10000;
+	
+	for( i in charactersMovements ) {
+		var cAngle = angle * charactersMovements[i].angleModifier + charactersMovements[i].offsetAngle;
+		characters[i].position.x = Math.cos(cAngle) * charactersMovements[i].radius + charactersMovements[i].offsetX;
+		characters[i].position.z = Math.sin(cAngle) * charactersMovements[i].radius + charactersMovements[i].offsetZ;
+		characters[i].position.y = terrainMap.heightAt(characters[i].position.x + (terrainMap.width() / 2 ), characters[i].position.z  + (terrainMap.depth() / 2 ));
+		characters[i].rotation.y = -cAngle;
+
+		var characterDistance = camera.position.distanceTo(characters[i].position);
+		if( ! charactersVisible[i] &&
+			characterDistance < 2000 ) {
+			charactersVisible[i] = true;
+			scene.add(characters[i]);
+		} else if ( charactersVisible[i] &&
+					characterDistance >= 2000 ) {
+			charactersVisible[i] = false;
+			scene.remove(characters[i]);
+		}
+	}
+	
+	/*
+	character.root.position.x = Math.cos(angle) * radius;
+	character.root.position.z = Math.sin(angle) * radius;
+	character.root.rotation.y = -angle;
+	*/
+
+	updateCharacterHeight(timeDelta);
+
 	// This is horribly inefficient
 	scene.traverse( function ( object ) { if ( object instanceof THREE.LOD ) { object.update( camera ); } } );
 	cameraControls.update();
 	renderer.render( scene, camera );
+
+
 }
