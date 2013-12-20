@@ -233,8 +233,9 @@ function init(){
 		debugMode: false,
 		workerScriptLocation: 'js/includes/DynamicTerrainMapChunkWorker.js',
 		chunkShowFarthest: false,
+		chunkHoverRange: -1000,
 		material: material.generateMaterial(),
-		detailRanges: [100,1000,1750,3000],
+		detailRanges: [1,1000,1750,3000],
 		chunkHoverRange: 300,
 		convertToFloat: function (rgba) {
 			return ( rgba.r + rgba.g + rgba.b);
@@ -556,7 +557,10 @@ function characterJump() {
 }
 
 function updateCharacterHeight(timeDelta) {
-	var h = terrainMap.heightAt(character.root.position.x + (terrainMap.width() / 2 ), character.root.position.z  + (terrainMap.depth() / 2 ));
+	var h = terrainMap.heightAt(
+		character.root.position.x + (terrainMap.width() / 2 ), 
+		character.root.position.z  + (terrainMap.depth() / 2 ),true
+	);
 	
 	// Cheap Physics for Demo
 	if( character.root.position.y > h ||

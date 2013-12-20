@@ -46,12 +46,14 @@ THREEx.MinecraftCharBodyAnimations	= function(character){
 		armLRotationZ	: +Math.PI/10,
 		armRRotationZ	: -Math.PI/10,
 		armRotationX	: +angleRange,
-		legRotationX	: -angleRange			
+		legRotationX	: -angleRange,
+		legRRotationZ	: +angleRange		
 	}).pushKeyframe(0.5, {
 		armLRotationZ	: +Math.PI/10,
 		armRRotationZ	: -Math.PI/10,
 		armRotationX	: -angleRange,
-		legRotationX	: +angleRange
+		legRotationX	: +angleRange,
+		legRRotationZ	: -angleRange
 	}).propertyTweens(propTweens).onCapture(onCapture).onUpdate(onUpdate));
 
 	// Setup 'walk' animation
