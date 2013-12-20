@@ -270,6 +270,10 @@ THREE.MMOControls.prototype._updateVelocity = function () {
     this._characterMovementVelocity = this._defaultVelocity;
     this._characterMovementAngle = this._vectorAngles[vector[0].toString()][vector[1].toString()];
     var direction = 'forward';
+    if( this._characterMovementAngle == (-Math.PI / 2) ||
+        this._characterMovementAngle == ( Math.PI / 2) ) {
+      direction = "right";
+    }
     this._moveStartCallback(direction);
   } else {
     this._characterMovementVelocity = 0;

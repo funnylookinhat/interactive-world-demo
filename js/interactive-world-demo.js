@@ -16,6 +16,7 @@ var charactersAnimations;
 var charactersMovements;
 var lastTime = false;
 var characterMoving = false;
+var characterMoveDirection = false;
 
 //init();
 //animate();
@@ -401,7 +402,13 @@ function init(){
 			terrainMap.checkGeometry();
 		},
 		moveStartCallback: function(direction) {
-			characterBodyAnimations.start('run');
+			characterMoveDirection = direction;
+			if( characterMoveDirection == "left" || 
+				characterMoveDirection == "right" ) {
+				characterBodyAnimations.start('strafe');
+			} else {
+				characterBodyAnimations.start('run');
+			}
 			characterMoving = true;
 		},
 		moveStopCallback: function() {
@@ -576,7 +583,12 @@ function updateCharacterHeight(timeDelta) {
 		characterYVelocity = 0;
 		fallTime = 0;
 		if( characterMoving ) {
-			characterBodyAnimations.start('run');
+			if( characterMoveDirection == "left" || 
+				characterMoveDirection == "right" ) {
+				characterBodyAnimations.start('strafe');
+			} else {
+				characterBodyAnimations.start('run');
+			}
 		} else {
 			characterBodyAnimations.start('stand');
 		}
