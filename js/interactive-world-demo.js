@@ -303,16 +303,16 @@ function init(){
 	charactersMovements = [];
 	charactersVisible = [];
 
-	var scaleMin = 5;
-	var scaleMax = 50;
+	var scaleMin = 4;
+	var scaleMax = 12;
 	var radiusMin = 50;
 	var radiusMax = 1000;
 	var offsetXMin = -1500;
 	var offsetXMax = 1500;
 	var offsetZMin = -1500;
 	var offsetZMax = 1500;
-	var angleModifierMin = 1;
-	var angleModifierMax = 5;
+	var angleModifierMin = 0.1;
+	var angleModifierMax = 0.5;
 
 	var movement;
 	var lod;
@@ -387,7 +387,7 @@ function init(){
 	
 	character = new THREEx.MinecraftChar();
 	character.loadSkin('resources/character/char.png');
-	character.root.scale.x = character.root.scale.y = character.root.scale.z = 10;
+	character.root.scale.x = character.root.scale.y = character.root.scale.z = 5;
 	character.root.position.set(-250,10,-250);
 	scene.add(character.root);
 
@@ -396,7 +396,7 @@ function init(){
 	
 	cameraControls = new THREE.MMOControls({
 		camera: camera,
-		radius: 50,
+		radius: 20,
 		character: character.root,
 		moveCallback: function () {
 			terrainMap.checkGeometry();
@@ -553,14 +553,14 @@ function animate() {
 	stats.update();
 }
 
-var gravity = -0.1;//-9.8;
+var gravity = -0.02;//-9.8;
 var characterYVelocity = 0;
 var fallTime = 0;
 
 function characterJump() {
 	fallTime = 0;
 	characterBodyAnimations.start('jump');
-	characterYVelocity = 3;
+	characterYVelocity = 0.5;//3;
 }
 
 function updateCharacterHeight(timeDelta) {

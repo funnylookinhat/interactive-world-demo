@@ -39,7 +39,7 @@ THREE.MMOControls = function (parameters) {
 
   this._minCameraRadius = 0.1;
 
-  this._defaultVelocity = 1;
+  this._defaultVelocity = 0.25;
 
   this._characterAngle = 0;
   this._characterAngleDelta = 0.00;
@@ -229,9 +229,12 @@ THREE.MMOControls.prototype._keyUp = function (event, self) {
 THREE.MMOControls.prototype._mouseWheel = function (event, self) {
   var delta = 0;
   if ( event.wheelDelta ) { // WebKit / Opera / Explorer 9
-    delta = - event.wheelDelta / 10;
+    delta = - event.wheelDelta / 20;
   } else if ( event.detail ) { // Firefox
     delta = event.detail;
+  }
+  if( self._cameraRadius < 25 ) {
+    delta /= 10;
   }
   self._cameraRadius += delta;
   if( self._cameraRadius < self._minCameraRadius ) {
