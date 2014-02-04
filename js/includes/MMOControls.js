@@ -34,7 +34,7 @@ THREE.MMOControls = function (parameters) {
   this._cameraPhi = 0.3;
   
   // Basically - ground or top-down.
-  this._minPhi = 0.01;
+  this._minPhi = -Math.PI / 2;//0.01;
   this._maxPhi = Math.PI / 2;
 
   this._minCameraRadius = 0.1;
