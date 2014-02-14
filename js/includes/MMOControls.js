@@ -34,12 +34,12 @@ THREE.MMOControls = function (parameters) {
   this._cameraPhi = 0.3;
   
   // Basically - ground or top-down.
-  this._minPhi = 0.01;
+  this._minPhi = -Math.PI / 2;//0.01;
   this._maxPhi = Math.PI / 2;
 
   this._minCameraRadius = 0.1;
 
-  this._defaultVelocity = 1;
+  this._defaultVelocity = 0.25;
 
   this._characterAngle = 0;
   this._characterAngleDelta = 0.00;
@@ -229,9 +229,12 @@ THREE.MMOControls.prototype._keyUp = function (event, self) {
 THREE.MMOControls.prototype._mouseWheel = function (event, self) {
   var delta = 0;
   if ( event.wheelDelta ) { // WebKit / Opera / Explorer 9
-    delta = - event.wheelDelta / 10;
+    delta = - event.wheelDelta / 20;
   } else if ( event.detail ) { // Firefox
     delta = event.detail;
+  }
+  if( self._cameraRadius < 25 ) {
+    delta /= 10;
   }
   self._cameraRadius += delta;
   if( self._cameraRadius < self._minCameraRadius ) {
@@ -270,6 +273,10 @@ THREE.MMOControls.prototype._updateVelocity = function () {
     this._characterMovementVelocity = this._defaultVelocity;
     this._characterMovementAngle = this._vectorAngles[vector[0].toString()][vector[1].toString()];
     var direction = 'forward';
+    if( this._characterMovementAngle == (-Math.PI / 2) ||
+        this._characterMovementAngle == ( Math.PI / 2) ) {
+      direction = "right";
+    }
     this._moveStartCallback(direction);
   } else {
     this._characterMovementVelocity = 0;

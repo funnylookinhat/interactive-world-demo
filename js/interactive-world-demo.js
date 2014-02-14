@@ -16,6 +16,7 @@ var charactersAnimations;
 var charactersMovements;
 var lastTime = false;
 var characterMoving = false;
+var characterMoveDirection = false;
 
 //init();
 //animate();
@@ -233,8 +234,9 @@ function init(){
 		debugMode: false,
 		workerScriptLocation: 'js/includes/DynamicTerrainMapChunkWorker.js',
 		chunkShowFarthest: false,
+		chunkHoverRange: -1000,
 		material: material.generateMaterial(),
-		detailRanges: [100,1000,1750,3000],
+		detailRanges: [1,1000,1750,3000],
 		chunkHoverRange: 300,
 		convertToFloat: function (rgba) {
 			return ( rgba.r + rgba.g + rgba.b);
@@ -301,16 +303,16 @@ function init(){
 	charactersMovements = [];
 	charactersVisible = [];
 
-	var scaleMin = 5;
-	var scaleMax = 50;
+	var scaleMin = 4;
+	var scaleMax = 12;
 	var radiusMin = 50;
 	var radiusMax = 1000;
 	var offsetXMin = -1500;
 	var offsetXMax = 1500;
 	var offsetZMin = -1500;
 	var offsetZMax = 1500;
-	var angleModifierMin = 1;
-	var angleModifierMax = 5;
+	var angleModifierMin = 0.1;
+	var angleModifierMax = 0.5;
 
 	var movement;
 	var lod;
@@ -385,7 +387,7 @@ function init(){
 	
 	character = new THREEx.MinecraftChar();
 	character.loadSkin('resources/character/char.png');
-	character.root.scale.x = character.root.scale.y = character.root.scale.z = 10;
+	character.root.scale.x = character.root.scale.y = character.root.scale.z = 5;
 	character.root.position.set(-250,10,-250);
 	scene.add(character.root);
 
@@ -394,13 +396,19 @@ function init(){
 	
 	cameraControls = new THREE.MMOControls({
 		camera: camera,
-		radius: 50,
+		radius: 20,
 		character: character.root,
 		moveCallback: function () {
 			terrainMap.checkGeometry();
 		},
 		moveStartCallback: function(direction) {
-			characterBodyAnimations.start('run');
+			characterMoveDirection = direction;
+			if( characterMoveDirection == "left" || 
+				characterMoveDirection == "right" ) {
+				characterBodyAnimations.start('strafe');
+			} else {
+				characterBodyAnimations.start('run');
+			}
 			characterMoving = true;
 		},
 		moveStopCallback: function() {
@@ -545,18 +553,21 @@ function animate() {
 	stats.update();
 }
 
-var gravity = -0.1;//-9.8;
+var gravity = -0.02;//-9.8;
 var characterYVelocity = 0;
 var fallTime = 0;
 
 function characterJump() {
 	fallTime = 0;
 	characterBodyAnimations.start('jump');
-	characterYVelocity = 3;
+	characterYVelocity = 0.5;//3;
 }
 
 function updateCharacterHeight(timeDelta) {
-	var h = terrainMap.heightAt(character.root.position.x + (terrainMap.width() / 2 ), character.root.position.z  + (terrainMap.depth() / 2 ));
+	var h = terrainMap.heightAt(
+		character.root.position.x + (terrainMap.width() / 2 ), 
+		character.root.position.z  + (terrainMap.depth() / 2 ),true
+	);
 	
 	// Cheap Physics for Demo
 	if( character.root.position.y > h ||
@@ -572,7 +583,12 @@ function updateCharacterHeight(timeDelta) {
 		characterYVelocity = 0;
 		fallTime = 0;
 		if( characterMoving ) {
-			characterBodyAnimations.start('run');
+			if( characterMoveDirection == "left" || 
+				characterMoveDirection == "right" ) {
+				characterBodyAnimations.start('strafe');
+			} else {
+				characterBodyAnimations.start('run');
+			}
 		} else {
 			characterBodyAnimations.start('stand');
 		}
